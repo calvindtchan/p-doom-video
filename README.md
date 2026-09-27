@@ -1,6 +1,11 @@
 # I'm Upping My P(doom)
 
-> **This is a remix workspace** forked from [JohnHeibel/PDoomVideo](https://github.com/JohnHeibel/PDoomVideo) (all credit to the original author; the upstream repo has no license, so ask before publishing a derivative widely). Changes here so far: the renderer finds Chrome on Linux/macOS/Windows and runs in containers, and the fonts are bundled so rendering works offline. To make your own version, edit the chapter files in `src/ch/` — see [Making your own](#making-your-own) below.
+> **This is a remix workspace** forked from [JohnHeibel/PDoomVideo](https://github.com/JohnHeibel/PDoomVideo) (all credit to the original author; the upstream repo has no license, so ask before publishing a derivative widely). Changes here so far:
+>
+> - **Anime style** (`ANIME` flag at the top of `src/core.js`; set it to `false` for the original watercolor look): steady clean line art, cel-shaded characters, clean backgrounds, a brighter colour grade and a soft bloom.
+> - **Clawd as Colonel Muska** (`src/clawd.js`): slate suit, cravat, slicked-back hair and round opaque glasses that glint. Calm eyes stay hidden behind the lenses; big emotions (stars, hearts, fear) pop through them. Any Clawd with no hat and no custom colour wears the costume (`muska: false` opts out).
+> - **Castle in the Sky homages**: the Omega Point (64.5 s) is a floating castle island with a glowing crystal, and in "What did Ilya see?" (133.6 s) the light blinds Colonel Clawd, his glasses fly off: *MY EYES!!*
+> - The renderer finds Chrome on Linux/macOS/Windows and runs in containers, and the fonts are bundled so rendering works offline. To make your own version, edit the chapter files in `src/ch/` — see [Making your own](#making-your-own) below.
 
 
 Source code for the [Claude Opus 5.5 music video for *I'm Upping My P(doom)*](https://youtu.be/8j-hR4fJywU).

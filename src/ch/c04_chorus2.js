@@ -515,6 +515,34 @@
     paint(ellPts(0, 0, r * .26, r * .26, 14), { wash: cols[2], fill: cols[1], fillOp: 90, ink: null });
     pop();
   }
+  // Floating island homage: a cone of rock with root tendrils, tiered round castle walls, a great tree on top and a
+  // glowing levitation crystal hanging underneath. (x, y) is the island's rim centre; s scales it (1 ≈ 520 px wide).
+  function skyCastle(x, y, s, t) {
+    const bob = 0 * wob(t, .4), X = x, Y = y + bob, R = 260 * s, ink = { ink: PAL.ink, sw: .9 };
+    // crystal glow + crystal
+    for (const [m, op] of [[3.2, 35], [2, 60], [1.2, 110]]) paint(ellPts(X, Y + R * .95, R * .22 * m, R * .22 * m, 22), { wash: '#8FE8FF', washOp: op, ink: null });
+    paint([[X, Y + R * .62], [X + R * .13, Y + R * .92], [X, Y + R * 1.25], [X - R * .13, Y + R * .92]], { wash: '#BFF4FF', ...ink });
+    paint([[X, Y + R * .62], [X + R * .13, Y + R * .92], [X, Y + R * .95]], { wash: '#6FD3F0', ink: null });
+    // rock underside with dangling roots
+    paint([[X - R, Y], [X - R * .8, Y + R * .3], [X - R * .45, Y + R * .62], [X, Y + R * .78], [X + R * .45, Y + R * .62], [X + R * .8, Y + R * .3], [X + R, Y]], { wash: '#6B5A7A', ...ink, curv: .3 });
+    paint([[X + R * .1, Y], [X + R, Y], [X + R * .8, Y + R * .3], [X + R * .45, Y + R * .62], [X + R * .05, Y + R * .76]], { wash: '#4E4160', washOp: 200, ink: null });
+    for (let i = 0; i < 7; i++) { const rx = X + (i - 3) * R * .22, ry = Y + R * (.55 - Math.abs(i - 3) * .09); inkLine([[rx, ry], [rx + 8 * s * Math.sin(t + i), ry + R * (.25 + .15 * hash(i))], [rx - 6 * s, ry + R * (.4 + .2 * hash(i + 4))]], .6, '#3E7A4E', 'inkfine', .6); }
+    // tiered round walls, lowest first
+    const tiers = [[1, .0, '#D9CBB0'], [.78, -.16, '#E6DAC0'], [.56, -.3, '#EFE6D0']];
+    for (const [w, dy, col] of tiers) {
+      const tx = R * w, ty = Y + R * dy, h = R * .16;
+      paint([[X - tx, ty], [X + tx, ty], [X + tx, ty - h], [X - tx, ty - h]], { wash: col, ...ink });
+      paint([[X + tx * .35, ty], [X + tx, ty], [X + tx, ty - h], [X + tx * .35, ty - h]], { wash: '#B3A68E', washOp: 150, ink: null });
+      for (let i = 0; i < 9; i++) { const ax = X - tx * .85 + i * tx * .21; paint(rrPts(ax - R * .025, ty - h * .75, R * .05, h * .5, R * .02), { wash: '#4A4058', ink: null }); }
+      inkLine([[X - tx, ty - h], [X + tx, ty - h]], .7, '#6C8F55', 'inkfine', 0);   // moss along each rim
+    }
+    // the great tree crowning it all
+    const ty = Y - R * .46;
+    paint(rectPts(X - R * .06, ty - R * .2, R * .12, R * .22), { wash: '#6E4E36', ...ink });
+    for (const [dx, dy, r, col] of [[-.3, -.32, .3, '#4F9A5A'], [.32, -.3, .3, '#3F8A52'], [0, -.5, .36, '#5DAE62'], [-.12, -.38, .22, '#74C274'], [.18, -.58, .2, '#86D07E']])
+      paint(ellPts(X + R * dx, ty + R * dy, R * r, R * r * .82, 18), { wash: col, ...ink });
+  }
+
   function shotOmega(t, lt) {
     const k = seg(t, 64.5, 65.88), C = [960, 380], flare = easeIn(seg(t, 65.5, 65.98));
     paint(rectPts(-60, -60, W + 120, H + 120), { wash: DEEP, fill: SPACE, fillOp: 170, tex: .6, border: .3, ink: null });
@@ -537,7 +565,9 @@
       const a = g.a0 + (t - 64.5) * .9 + 3.2 * k * k, x = C[0] + Math.cos(a) * r, y = C[1] + Math.sin(a) * r * .8;
       galaxy(x, y, g.size * (.5 + .5 * f), g.spin + t * 2.5, g.cols, 1 + 2.2 * (1 - f), .5 * (.6 + .4 * f), a + Math.PI / 2);
     }
-    // the point itself
+    // the Omega Point is a castle in the sky: a floating island drifting out of the vortex, its crystal core blazing
+    { const cs = .5 + .45 * ease(k); skyCastle(C[0], C[1] - 260 * cs * 1.02, cs, t); }   // hung so the crystal sits on the point
+    // the point itself (the crystal's glow)
     const gr = 26 + 50 * k + 10 * pulse(t, 4);
     for (const [m, op] of [[4, 30], [2.6, 45], [1.7, 70]]) paint(ellPts(C[0], C[1], gr * m, gr * m, 24), { wash: m > 3 ? GOLD2 : '#FFE9A8', washOp: op, ink: null });
     if (flare > 0) for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + t * .6, l = 200 + 1500 * flare; paint([[C[0], C[1]], [C[0] + Math.cos(a - .05) * l, C[1] + Math.sin(a - .05) * l], [C[0] + Math.cos(a + .05) * l, C[1] + Math.sin(a + .05) * l]], { fill: PAL.cream, fillOp: 110, bleed: .1, tex: .2, ink: null }); }

@@ -660,17 +660,27 @@
     const walkK = seg(t, 132.0, 132.85);
     const rx = pre ? lerp(140, 740, walkK) : lerp(740, HRX, blown), kx = pre ? lerp(290, 842, walkK) : lerp(842, HCX, blown);
     const tip = walkK < 1 ? Math.abs(Math.sin(walkK * 7 * Math.PI)) : 0;
-    const cm = mood(t, [[132, 'look'], [B(195), 'swirl'], [TSL, 'scared', '!!']]);
+    const cm = mood(t, [[132, 'look'], [B(195), 'swirl'], [TSL, 'x', 'sweat']]);
+    const blind = !pre;                                                          // "My eyes!": the light blinds Colonel Clawd
     const rm = mood(t, [[132, 'look'], [B(195) + .08, 'swirl'], [TSL, 'wide']]);
     if (!landed) {
       researcher(rx, HY - 10, 24, { ...rm, lookX: 1, walk: walkK < 1 ? walkK * 3.5 : null, dy: -tip * .5 - (pre ? 0 : Math.sin(blown * Math.PI) * 3), rot: pre ? .26 * peek : -.5 * blown,
         aL: pre ? .5 : 1.4, aR: pre ? .4 - .6 * peek : 1.2, mouth: pre ? (t > B(195) ? 'O' : 'o') : 'O', hairUp: pre ? 0 : 1, glassesTilt: pre ? 0 : .3 });
       clawd(kx, HY, 26, { ...cm, lookX: 1, walk: walkK < 1 ? walkK * 3.5 : null, dy: -tip * .8 - (pre ? 0 : Math.sin(blown * Math.PI) * 2.5), rot: pre ? .2 * peek : -.45 * blown,
-        aL: pre ? .6 : 1.4, aR: pre ? .6 : 1.3, mouth: pre ? (t > B(195) ? 'O' : 'o') : 'O' });
+        aL: pre ? .6 : 1.4, aR: pre ? .6 : 1.3, mouth: pre ? (t > B(195) ? 'O' : 'o') : 'O', noGlasses: blind });
     } else {
       const bump = Math.exp(-(ta - .32) * 9);
       sitters(t, { r: { ...rm, hairUp: .4 + .6 * bump, glassesTilt: .3, mouth: 'O', sq: .2 * bump, aL: -.6, aR: -.6, emote: 'sweat', emoteK: seg(ta, .5, .8) },
-        c: { ...cm, mouth: 'wobble', sq: .25 * bump, aL: .1, aR: .1 } });
+        c: { ...cm, mouth: 'O', noGlasses: true, sq: .25 * bump, aL: 2.2 + .15 * Math.sin(t * 30), aR: 2.2 + .15 * Math.sin(t * 30 + 1) } });   // clutching his face
+    }
+    if (blind) {                                                                   // the round glasses spin away and clatter down
+      const g = seg(t, TSL, TSL + .9), gx = lerp(kx - 20, HCX + 330, g), gy = lerp(HY - 160, HY - 12, easeIn(g)) - 190 * Math.sin(g * Math.PI), gr = g * 9;
+      push(); translate(gx, gy); rotate(gr);
+      for (const s of [-1, 1]) paint(ellPts(s * 34, 0, 30, 30, 18), { wash: '#26304A', washOp: 240, ink: '#1B1622', sw: .8 });
+      inkLine([[-4, -4], [0, -8], [4, -4]], .6, '#1B1622', 'inkfine', .5);
+      for (const s of [-1, 1]) paint([[s * 34 - 20, -6], [s * 34 - 6, -20], [s * 34, -15], [s * 34 - 15, -1]], { wash: '#FFFFFF', washOp: 210, ink: null });
+      pop();
+      sfx('MY EYES!!', 560, 430, 120, PAL.cream, ta - .35, { life: 1.9, rot: .08, stroke: RED });
     }
     rays(t, cw, lit, true);                                                        // the light falls on their faces
     if (!pre) {

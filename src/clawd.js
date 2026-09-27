@@ -7,7 +7,12 @@
 //   Arms pivot at (±4.9u, -4.5u) and are 2.2u long; o.armL / o.armR are called at the arm TIP in arm space
 //   (x runs along the arm, outward), so a held prop just draws around (0, 0).
 
+// Clawd is dressed as Colonel Muska (slate suit, cravat, slicked hair, round tinted glasses) whenever it has no other
+// costume: no custom colour and no hat. Pass muska: false to opt out, or muska: true to force it.
+const MUSKA = { suit: '#4E5A78', suitDk: '#323B55', shirt: '#F4F1EA', cravat: '#E8C766', cravatDk: '#B8923A', hair: '#4A3226', hairLt: '#7A5440', lens: '#26304A' };
+
 function clawd(x, y, u, o = {}) {
+  const muska = o.muska ?? (!o.col && !o.hat);
   const dy = (o.dy || 0) * u, sq = (o.sq || 0) + (o.take || 0);
   const sw = clamp(u / 15, .45, 2.4) * (o.swMul || 1), J = u * .07;
   const col = o.col || PAL.clay, dk = o.dk || PAL.clayDk, lt = o.lt || '#F5B394';
@@ -26,13 +31,17 @@ function clawd(x, y, u, o = {}) {
   if (!o.noLegs) [-4, -2, 1, 3].forEach((lx, i) => {
     let h = 2.2;
     if (o.walk != null) { const ph = Math.sin((o.walk + (i % 2 ? .5 : 0)) * TAU); if (ph > 0) h = 2.2 - ph * .9; }
-    paint(rectPts(lx * u, -2.4 * u, u, h * u, J * .6), { wash: dk, washOp: 255, ink: PAL.ink, sw: sw * .8 });
+    paint(rectPts(lx * u, -2.4 * u, u, h * u, J * .6), { wash: muska ? MUSKA.suitDk : dk, washOp: 255, ink: PAL.ink, sw: sw * .8 });
+    if (muska) paint(rectPts(lx * u - .1 * u, (h - 2.6) * u, 1.2 * u, .45 * u), { wash: '#1E1A24', ink: PAL.ink, sw: sw * .5 });  // shoes
   });
 
   // arms
   const arm = (side, a, hook) => {
     push(); translate(side * 4.9 * u, -4.5 * u); rotate(side < 0 ? a : -a);
-    paint(rectPts(side < 0 ? -2.2 * u : 0, -.5 * u, 2.2 * u, u, J * .6), { wash: col, washOp: 255, fill: dk, fillOp: 60, tex: .5, ink: PAL.ink, sw: sw * .8 });
+    if (muska) {
+      paint(rectPts(side < 0 ? -2.2 * u : 0, -.5 * u, 2.2 * u, u, J * .6), { wash: MUSKA.suit, washOp: 255, ink: PAL.ink, sw: sw * .8 });
+      paint(rectPts(side < 0 ? -2.2 * u : 1.75 * u, -.5 * u, .45 * u, u), { wash: MUSKA.shirt, ink: PAL.ink, sw: sw * .5 });  // cuff
+    } else paint(rectPts(side < 0 ? -2.2 * u : 0, -.5 * u, 2.2 * u, u, J * .6), { wash: col, washOp: 255, fill: dk, fillOp: 60, tex: .5, ink: PAL.ink, sw: sw * .8 });
     if (hook) { translate(side * 2.2 * u, 0); if (side < 0) scale(-1, 1); hook(u, sw); }
     pop();
   };
@@ -53,20 +62,30 @@ function clawd(x, y, u, o = {}) {
     paint(ellPts(-1.6 * u, -6.9 * u, 3.2 * u, 1 * u, 16, J), { fill: lt, fillOp: 110, bleed: .15, tex: .8, border: .8, ink: null });
     for (let i = 0; i < 6; i++) { const tx = -4.2 * u + i * 1.6 * u; paint([[tx, hy + .1 * u], [tx + 1.3 * u, hy + .1 * u], [tx + .65 * u, hy - .8 * u]], { wash: PAL.cream, ink: PAL.ink, sw: sw * .45 }); }
     paint(rectPts(-5 * u, -8 * u, 10 * u, 2.9 * u, J), { ink: PAL.ink, sw });
-    eyes(u, o, sw);
+    if (muska) muskaHair(u, sw);
+    muskaEyes(u, o, sw, muska);
     hat(u, o.hat, sw);
     pop();
   } else {
     // body: flat base so it reads, a lighter pool up top and a darker settle along the bottom, ink last
     const body = rectPts(-5 * u, -8 * u, 10 * u, 6 * u, J);
     paint(body, { wash: col, washOp: 255, ink: null });
-    paint(ellPts(-1.6 * u, -6.4 * u, 3.4 * u, 1.5 * u, 18, J * 2, -.08), { fill: lt, fillOp: 120, bleed: .2, tex: .85, border: .8, ink: null });
-    paint(rectPts(-4.8 * u, -3.8 * u, 9.6 * u, 1.6 * u, J), { fill: dk, fillOp: 120, bleed: .03, tex: .7, border: .5, ink: null });
+    if (ANIME) {
+      // cel shading: a hard-edged shadow down the right side and under the brow, a crisp highlight top-left
+      paint([[1.6 * u, -8 * u], [5 * u, -8 * u], [5 * u, -2 * u], [-5 * u, -2 * u], [-5 * u, -3.1 * u], [2.4 * u, -3.4 * u]], { wash: dk, washOp: 150, ink: null });
+      paint([[-4.4 * u, -7.5 * u], [-1.2 * u, -7.5 * u], [-1.8 * u, -7.05 * u], [-4.4 * u, -6.9 * u]], { wash: '#FFFFFF', washOp: 150, ink: null });
+      paint(ellPts(-4.25 * u, -6.35 * u, .22 * u, .22 * u, 8), { wash: '#FFFFFF', washOp: 200, ink: null });
+    } else {
+      paint(ellPts(-1.6 * u, -6.4 * u, 3.4 * u, 1.5 * u, 18, J * 2, -.08), { fill: lt, fillOp: 120, bleed: .2, tex: .85, border: .8, ink: null });
+      paint(rectPts(-4.8 * u, -3.8 * u, 9.6 * u, 1.6 * u, J), { fill: dk, fillOp: 120, bleed: .03, tex: .7, border: .5, ink: null });
+    }
+    if (muska) muskaSuit(u, sw);
     paint(body, { ink: PAL.ink, sw });
+    if (muska) muskaHair(u, sw);
 
     if (o.blush) for (const bx of [-3.6, 3.6]) paint(ellPts(bx * u, -4.6 * u, u * .8, u * .4, 14), { fill: PAL.rose, fillOp: 150, bleed: .2, ink: null });
     if (o.hat === 'mask') paint([[-5.5 * u, -7.7 * u], [5.5 * u, -7.7 * u], [4.4 * u, -4.7 * u], [.6 * u, -5.4 * u], [-.6 * u, -5.4 * u], [-4.4 * u, -4.7 * u]], { wash: PAL.violet, ink: PAL.ink, sw: sw * .7 });
-    eyes(u, o, sw);
+    muskaEyes(u, o, sw, muska);
     mouth(u, o.mouth, sw);
     hat(u, o.hat, sw);
   }
@@ -83,6 +102,8 @@ function mouth(u, m, sw) {
   else if (m === 'grin') paint([[-1.3 * u, -4.8 * u], [1.3 * u, -4.8 * u], [.9 * u, -3.9 * u], [-.9 * u, -3.9 * u]], { wash: '#4A1F2A', ink: PAL.ink, sw: sw * .6, curv: .3 });
   else if (m === 'flat') inkLine([[-.7 * u, -4.4 * u], [.7 * u, -4.4 * u]], sw * .8, PAL.ink, 'ink', 0);
   else if (m === 'wobble') inkLine([[-1 * u, -4.4 * u], [-.5 * u, -4.7 * u], [0, -4.4 * u], [.5 * u, -4.7 * u], [1 * u, -4.4 * u]], sw * .7, PAL.ink, 'ink', .3);
+  else if (m === 'smirk') inkLine([[-.9 * u, -4.4 * u], [.3 * u, -4.35 * u], [.9 * u, -4.75 * u]], sw * .8, PAL.ink, 'ink', .5);
+  else if (m === 'laugh') paint([[-1.5 * u, -4.9 * u], [1.5 * u, -4.9 * u], [1 * u, -3.7 * u], [0, -3.5 * u], [-1 * u, -3.7 * u]], { wash: '#4A1F2A', ink: PAL.ink, sw: sw * .6, curv: .4 });
   else if (m === 'cat') inkLine([[-.9 * u, -4.5 * u], [-.45 * u, -4.1 * u], [0, -4.5 * u], [.45 * u, -4.1 * u], [.9 * u, -4.5 * u]], sw * .7, PAL.ink, 'ink', .5);
 }
 
@@ -129,6 +150,53 @@ function eyes(u, o, sw) {
     } else if (e === 'dot') paint(ellPts(cx, Y + u, u * .45, u * .55, 12), { wash: PAL.ink, ink: null });
   }
   if (sqz > 0) pop();
+}
+
+// ---------- Colonel Muska costume (body-local coordinates, see top of file) ----------
+function muskaSuit(u, sw) {
+  // jacket across the lower body, open in a V over the shirt, with a cravat at the throat
+  paint([[-5 * u, -3.35 * u], [-1.5 * u, -3.35 * u], [0, -2 * u], [-5 * u, -2 * u]], { wash: MUSKA.suit, ink: null });
+  paint([[5 * u, -3.35 * u], [1.5 * u, -3.35 * u], [0, -2 * u], [5 * u, -2 * u]], { wash: MUSKA.suit, ink: null });
+  if (ANIME) paint([[2.2 * u, -3.35 * u], [5 * u, -3.35 * u], [5 * u, -2 * u], [1.2 * u, -2 * u]], { wash: MUSKA.suitDk, washOp: 170, ink: null });
+  paint([[-1.5 * u, -3.35 * u], [1.5 * u, -3.35 * u], [0, -2 * u]], { wash: MUSKA.shirt, ink: null });
+  // lapels
+  for (const s of [-1, 1]) paint([[s * 1.5 * u, -3.4 * u], [s * 2.6 * u, -3.4 * u], [s * 1.6 * u, -2.8 * u], [s * .45 * u, -2.3 * u]], { wash: MUSKA.suitDk, ink: PAL.ink, sw: sw * .45 });
+  inkLine([[-5 * u, -3.35 * u], [5 * u, -3.35 * u]], sw * .5, PAL.ink, 'inkfine', 0);
+  // cravat: knot plus a short puffed drape
+  paint([[-.75 * u, -3.4 * u], [.75 * u, -3.4 * u], [.45 * u, -3.0 * u], [-.45 * u, -3.0 * u]], { wash: MUSKA.cravat, ink: PAL.ink, sw: sw * .45 });
+  paint([[-.45 * u, -3.0 * u], [.45 * u, -3.0 * u], [.75 * u, -2.6 * u], [0, -2.35 * u], [-.75 * u, -2.6 * u]], { wash: MUSKA.cravat, ink: PAL.ink, sw: sw * .45, curv: .3 });
+  paint([[.1 * u, -2.95 * u], [.45 * u, -3.0 * u], [.72 * u, -2.62 * u], [.3 * u, -2.5 * u]], { wash: MUSKA.cravatDk, washOp: 180, ink: null });
+  // buttons
+  for (const by of [-2.75, -2.3]) { paint(ellPts(-1.55 * u, by * u, .16 * u, .16 * u, 8), { wash: '#1E1A24', ink: null }); }
+}
+function muskaHair(u, sw) {
+  // slicked-back hair: a glossy cap over the top edge, swept back, with sideburns down both sides
+  paint([[-5.35 * u, -7.2 * u], [-5.3 * u, -8.3 * u], [-3.5 * u, -8.95 * u], [0, -9.15 * u], [3.5 * u, -8.95 * u], [5.4 * u, -8.35 * u], [5.5 * u, -7.4 * u],
+    [4.2 * u, -7.7 * u], [2 * u, -7.75 * u], [0, -7.7 * u], [-2.2 * u, -7.75 * u], [-4.2 * u, -7.65 * u]], { wash: MUSKA.hair, ink: PAL.ink, sw: sw * .7, curv: .25 });
+  for (const s of [-1, 1]) paint([[s * 5.05 * u, -7.8 * u], [s * 5.4 * u, -7.8 * u], [s * 5.35 * u, -5.9 * u], [s * 5.05 * u, -6.2 * u]], { wash: MUSKA.hair, ink: PAL.ink, sw: sw * .5 });
+  // comb lines and a sheen streak
+  for (const k of [-2.6, -.6, 1.4, 3.3]) inkLine([[k * u - .9 * u, -8.05 * u], [k * u, -8.7 * u], [k * u + 1.1 * u, -8.9 * u]], sw * .35, '#2A1B14', 'inkfine', .5);
+  paint([[-3.8 * u, -8.6 * u], [-.6 * u, -8.95 * u], [-.8 * u, -8.7 * u], [-3.6 * u, -8.4 * u]], { wash: MUSKA.hairLt, washOp: 220, ink: null });
+}
+// Calm eyes hide behind opaque glinting lenses (Muska's signature look); big emotions pop through on top of them.
+const CALM_EYES = ['normal', 'look', 'closed', 'narrow', 'dot'];
+function muskaEyes(u, o, sw, muska) {
+  if (!muska) return eyes(u, o, sw);
+  if (CALM_EYES.includes(o.eyes || 'normal')) { eyes(u, o, sw); muskaGlasses(u, o, sw, true); }
+  else { muskaGlasses(u, o, sw, false); eyes(u, o, sw); }
+}
+function muskaGlasses(u, o, sw, opaque) {
+  // round tinted spectacles with a bright anime glint
+  if ((o.eyes || 'normal') === 'shades' || o.noGlasses) return;
+  const R = 1.35 * u, L = [[-2.5 * u, -6 * u], [2.5 * u, -6 * u]];
+  for (const [cx, cy] of L) {
+    paint(ellPts(cx, cy, R, R, 24), { wash: MUSKA.lens, washOp: opaque ? 240 : 150, ink: '#1B1622', sw: sw * .75 });
+    paint([[cx - .95 * u, cy - .35 * u], [cx - .35 * u, cy - .95 * u], [cx - .1 * u, cy - .75 * u], [cx - .75 * u, cy - .1 * u]], { wash: '#FFFFFF', washOp: 215, ink: null });
+    paint(ellPts(cx + .6 * u, cy + .55 * u, .16 * u, .16 * u, 8), { wash: '#FFFFFF', washOp: 170, ink: null });
+  }
+  inkLine([[-2.5 * u + R, -6.15 * u], [0, -6.45 * u], [2.5 * u - R, -6.15 * u]], sw * .55, '#1B1622', 'inkfine', .5);
+  inkLine([[-2.5 * u - R, -6.2 * u], [-5 * u, -6.5 * u]], sw * .45, '#1B1622', 'inkfine', 0);
+  inkLine([[2.5 * u + R, -6.2 * u], [5 * u, -6.5 * u]], sw * .45, '#1B1622', 'inkfine', 0);
 }
 
 function hat(u, h, sw) {

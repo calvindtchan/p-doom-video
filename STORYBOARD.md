@@ -8,6 +8,10 @@ The video is a stage show that goes off the rails. It opens on a painted theater
 
 **Keep it text-light.** Tell every joke with pictures and acting. Use a handful of big sound effects across the whole video (FOOM, BOOM, CHOMP, SLAM…) and only rarely a single short word or glyph where the joke truly needs it. No labels on things, no captions, and no signs that repeat the lyric (the karaoke already does that). A text-heavy frame looks worse, so when in doubt, leave the text out.
 
+## Remix: anime Colonel Muska
+
+This version restyles the whole show as anime and casts Clawd as Colonel Muska from *Castle in the Sky* (a fan homage): slate suit, cravat, slicked hair, round glinting glasses. He is a smug, grandiose villain who wants the power of the AI "castle" for himself. Two scenes nod to the film: the Omega Point becomes a floating castle island with a levitation crystal, and the door-slam of light in "What did Ilya see?" becomes his "My eyes!" moment. Everything below still describes the shots; read "Clawd" as Colonel Clawd.
+
 ## Cast
 
 | Who | Look | Role |

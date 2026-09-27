@@ -2,6 +2,9 @@
 const W = 1920, H = 1080;
 const BPM = 88, BEAT = 60 / BPM, OFF = 0.21, BOIL = 12, DUR = 156.6;
 const TAU = Math.PI * 2;
+// Anime look: clean steady linework, cel-style fills instead of watercolor bleed, clean paper, punchier colour grade.
+// Set to false to get the original watercolor style back.
+const ANIME = true;
 const PAL = {
   paper: '#F3EBDC', ink: '#2B2233', clay: '#D97757', clayDk: '#A84D33', clayLt: '#F2A283',
   night: '#1F2550', indigo: '#2F3C7A', rose: '#E27A92', ochre: '#E8AA38', sap: '#6E9F58',
@@ -16,7 +19,7 @@ const backOut = x => { x = clamp(x); const s = 1.9; return 1 + (s + 1) * Math.po
 const hash = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 const bpOf = t => (t - OFF) / BEAT;
 // Seeded by the boil frame, so linework "boils" at BOIL fps like hand-drawn animation.
-const jit = a => (random() * 2 - 1) * a;
+const jit = a => (random() * 2 - 1) * a * (ANIME ? .2 : 1);
 
 // ---------- timing helpers (everything is a pure function of t; no state survives between frames) ----------
 const seg = (t, a, b) => clamp((t - a) / (b - a));                 // 0..1 progress of t through [a, b]
@@ -98,7 +101,8 @@ function starPts(cx, cy, r, inner = .38, n = 4, rot = -Math.PI / 2) {
 function paint(pts, o = {}) {
   if (o.wash || o.fill || o.hatch) {
     if (o.wash) brush.wash(o.wash, o.washOp ?? 255); else brush.noWash();
-    if (o.fill) { brush.fill(o.fill, o.fillOp ?? 170); brush.fillBleed(o.bleed ?? .1); brush.fillTexture(o.tex ?? .4, o.border ?? .35); } else brush.noFill();
+    if (o.fill && ANIME) { brush.fill(o.fill, o.fillOp ?? 170); brush.fillBleed((o.bleed ?? .1) * .15); brush.fillTexture(0, .12, false); }
+    else if (o.fill) { brush.fill(o.fill, o.fillOp ?? 170); brush.fillBleed(o.bleed ?? .1); brush.fillTexture(o.tex ?? .4, o.border ?? .35); } else brush.noFill();
     if (o.hatch) { brush.hatch(o.hatch.d, o.hatch.a, o.hatch.o || { rand: .15 }); brush.hatchStyle(o.hatch.b || 'HB', o.hatch.c || PAL.ink, o.hatch.w || 1); } else brush.noHatch();
     brush.noStroke();
     if (o.curv) { brush.beginShape(o.curv); for (const p of pts) brush.vertex(p[0], p[1]); brush.endShape(true); }
@@ -155,6 +159,7 @@ function lcg(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) /
 function makePaper() {
   const g = createGraphics(W, H); g.pixelDensity(1); const c = g.drawingContext, rnd = lcg(11);
   c.fillStyle = PAL.paper; c.fillRect(0, 0, W, H);
+  if (ANIME) return g;  // clean cel background: no blotches or paper fibres
   for (let i = 0; i < 70; i++) { const x = rnd() * W, y = rnd() * H, r = 120 + rnd() * 380, gr = c.createRadialGradient(x, y, 0, x, y, r), a = .045 * rnd(); gr.addColorStop(0, `rgba(160,125,80,${a})`); gr.addColorStop(1, 'rgba(160,125,80,0)'); c.fillStyle = gr; c.fillRect(x - r, y - r, 2 * r, 2 * r); }
   c.lineWidth = 1;
   for (let i = 0; i < 1400; i++) { const x = rnd() * W, y = rnd() * H, l = 6 + rnd() * 26, a = rnd() * TAU; c.strokeStyle = `rgba(110,88,60,${.035 + rnd() * .06})`; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(a + .6) * l * .5, y + Math.sin(a + .6) * l * .5, x + Math.cos(a) * l, y + Math.sin(a) * l); c.stroke(); }
@@ -164,15 +169,22 @@ function makePaper() {
 function makeGrain() {
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d'), rnd = lcg(5);
   const id = c.createImageData(W, H), d = id.data;
-  for (let i = 0; i < d.length; i += 4) { const v = 255 - (rnd() < .55 ? rnd() * rnd() * 34 : 0); d[i] = v; d[i + 1] = v - 1; d[i + 2] = v - 3; d[i + 3] = 255; }
+  for (let i = 0; i < d.length; i += 4) { const v = 255 - (rnd() < .55 ? rnd() * rnd() * (ANIME ? 8 : 34) : 0); d[i] = v; d[i + 1] = v - 1; d[i + 2] = v - 3; d[i + 3] = 255; }
   c.putImageData(id, 0, 0);
-  const g = c.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * 1.05); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(120,95,70,.35)');
+  const g = c.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * 1.05); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, ANIME ? 'rgba(70,60,110,.22)' : 'rgba(120,95,70,.35)');
   c.fillStyle = g; c.fillRect(0, 0, W, H);
   return cv;
 }
 
 // ---------- custom brushes ----------
 function defineBrushes() {
+  if (ANIME) {
+    // anime line art: crisp, solid, gently tapered, no grain or wobble
+    brush.add('ink', { type: 'default', weight: 4.4, scatter: .02, sharpness: 1, grain: 200, opacity: 255, spacing: .12, pressure: [1.1, .85], rotate: 'natural', noise: 0 });
+    brush.add('inkfine', { type: 'default', weight: 2.2, scatter: .02, sharpness: 1, grain: 200, opacity: 255, spacing: .12, pressure: [1.05, .85], rotate: 'natural', noise: 0 });
+    brush.add('dry', { type: 'default', weight: 12, scatter: 1, sharpness: .6, grain: 20, opacity: 110, spacing: .4, pressure: [1, .7], rotate: 'natural', noise: .1 });
+    return;
+  }
   brush.add('ink', { type: 'default', weight: 5, scatter: .25, sharpness: .8, grain: 40, opacity: 235, spacing: .2, pressure: [1.15, .75], rotate: 'natural', noise: .15 });
   brush.add('inkfine', { type: 'default', weight: 2.6, scatter: .15, sharpness: .85, grain: 40, opacity: 230, spacing: .2, pressure: [1.1, .8], rotate: 'natural', noise: .1 });
   brush.add('dry', { type: 'default', weight: 14, scatter: 3, sharpness: .3, grain: 6, opacity: 90, spacing: .6, pressure: [1, .6], rotate: 'natural', noise: .4 });
@@ -200,7 +212,13 @@ function draw() {
 function composite(t) {
   const c = outX;
   c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  if (ANIME) c.filter = 'saturate(1.3) contrast(1.08) brightness(1.03)';  // bright anime colour grade
   c.drawImage(drawingContext.canvas, 0, 0, W, H);
+  c.filter = 'none';
+  if (ANIME) {  // soft bloom: a blurred, brightened copy screened on top gives the glowy anime lighting
+    c.save(); c.globalCompositeOperation = 'screen'; c.globalAlpha = .22; c.filter = 'blur(14px) brightness(1.1) saturate(1.4)';
+    c.drawImage(drawingContext.canvas, 0, 0, W, H); c.restore();
+  }
   drawLetters(c);
   c.globalCompositeOperation = 'multiply'; c.drawImage(grainC, 0, 0);
   c.globalCompositeOperation = 'source-over';
